@@ -1,0 +1,32 @@
+mode: prepare_first
+
+jobs:
+- label: Syncoid backups prune
+  pool: tank
+  dataset: /syncoid-backups
+  recursive: true
+  snapshot_pattern: "^syncoid_backuphost_(.*)$"
+  snapshot_time:
+    source: capture_group
+    capture_group: 1
+    format: chrono_fmt
+    chrono_fmt: "%Y-%m-%d:%H:%M:%S-GMT%:z"
+  retention_policy: simple_buckets
+  retention_config:
+    latest: 1
+    hourly: 5
+    daily: 7
+- label: Local rpool home state
+  pool: rpool
+  dataset: /home
+  recursive: true
+  snapshot_pattern: "^syncoid_backuphost_(.*)$"
+  snapshot_time:
+    source: capture_group
+    capture_group: 1
+    format: chrono_fmt
+    chrono_fmt: "%Y-%m-%d:%H:%M:%S-GMT%:z"
+  retention_policy: simple_buckets
+  retention_config:
+    latest: 1
+    daily: 7
