@@ -16,7 +16,7 @@
       flake-utils,
       treefmt-nix,
     }:
-    flake-utils.lib.eachDefaultSystem (
+    (flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages."${system}";
@@ -43,5 +43,8 @@
           ];
         };
       }
-    );
+    ))
+    // {
+      nixosModules.default = import ./module.nix;
+    };
 }
