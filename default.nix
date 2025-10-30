@@ -1,4 +1,11 @@
-{ stdenv, lib, rustPlatform, pkg-config, zfs, makeWrapper }:
+{
+  stdenv,
+  lib,
+  rustPlatform,
+  pkg-config,
+  zfs,
+  makeWrapper,
+}:
 
 rustPlatform.buildRustPackage rec {
   pname = "zfs-snap-prune";
@@ -13,7 +20,10 @@ rustPlatform.buildRustPackage rec {
     };
   };
 
-  nativeBuildInputs = [ pkg-config makeWrapper ];
+  nativeBuildInputs = [
+    pkg-config
+    makeWrapper
+  ];
   buildInputs = [ zfs ];
 
   postInstall = ''

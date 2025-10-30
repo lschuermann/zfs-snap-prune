@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -14,37 +19,41 @@ let
   # delegating permissions, if it doesn't exist we delegate it to the parent
   # dataset (if it exists). This should solve the case of provisoning new
   # datasets.
-  buildAllowCommand = permissions: dataset: (
-    "-+${pkgs.writeShellScript "zfs-allow-${dataset}" ''
-      # Here we explicitly use the booted system to guarantee the stable API needed by ZFS
+  buildAllowCommand =
+    permissions: dataset:
+    (
+      "-+${pkgs.writeShellScript "zfs-allow-${dataset}" ''
+        # Here we explicitly use the booted system to guarantee the stable API needed by ZFS
 
-      # Run a ZFS list on the dataset to check if it exists
-      if ${lib.escapeShellArgs [
-        "/run/booted-system/sw/bin/zfs"
-        "list"
-        dataset
-      ]} 2> /dev/null; then
-        ${lib.escapeShellArgs [
-          "/run/booted-system/sw/bin/zfs"
-          "allow"
-          cfg.user
-          (concatStringsSep "," permissions)
-          dataset
-        ]}
-      ${lib.optionalString ((builtins.dirOf dataset) != ".") ''
-        else
+        # Run a ZFS list on the dataset to check if it exists
+        if ${
+          lib.escapeShellArgs [
+            "/run/booted-system/sw/bin/zfs"
+            "list"
+            dataset
+          ]
+        } 2> /dev/null; then
           ${lib.escapeShellArgs [
             "/run/booted-system/sw/bin/zfs"
             "allow"
             cfg.user
             (concatStringsSep "," permissions)
-            # Remove the last part of the path
-            (builtins.dirOf dataset)
+            dataset
           ]}
-      ''}
-      fi
-    ''}"
-  );
+        ${lib.optionalString ((builtins.dirOf dataset) != ".") ''
+          else
+            ${lib.escapeShellArgs [
+              "/run/booted-system/sw/bin/zfs"
+              "allow"
+              cfg.user
+              (concatStringsSep "," permissions)
+              # Remove the last part of the path
+              (builtins.dirOf dataset)
+            ]}
+        ''}
+        fi
+      ''}"
+    );
 
   # Function to build "zfs unallow" commands for the filesystems we've
   # delegated permissions to. Here we unallow both the target but also
@@ -52,26 +61,30 @@ let
   # knowing if the allow command did execute on the parent dataset or
   # not in the pre-hook. We can't run the same if in the post hook
   # since the dataset should have been created at this point.
-  buildUnallowCommand = permissions: dataset: (
-    "-+${pkgs.writeShellScript "zfs-unallow-${dataset}" ''
-      # Here we explicitly use the booted system to guarantee the stable API needed by ZFS
-      ${lib.escapeShellArgs [
-        "/run/booted-system/sw/bin/zfs"
-        "unallow"
-        cfg.user
-        (concatStringsSep "," permissions)
-        dataset
-      ]}
-      ${lib.optionalString ((builtins.dirOf dataset) != ".") (lib.escapeShellArgs [
-        "/run/booted-system/sw/bin/zfs"
-        "unallow"
-        cfg.user
-        (concatStringsSep "," permissions)
-        # Remove the last part of the path
-        (builtins.dirOf dataset)
-      ])}
-    ''}"
-  );
+  buildUnallowCommand =
+    permissions: dataset:
+    (
+      "-+${pkgs.writeShellScript "zfs-unallow-${dataset}" ''
+        # Here we explicitly use the booted system to guarantee the stable API needed by ZFS
+        ${lib.escapeShellArgs [
+          "/run/booted-system/sw/bin/zfs"
+          "unallow"
+          cfg.user
+          (concatStringsSep "," permissions)
+          dataset
+        ]}
+        ${lib.optionalString ((builtins.dirOf dataset) != ".") (
+          lib.escapeShellArgs [
+            "/run/booted-system/sw/bin/zfs"
+            "unallow"
+            cfg.user
+            (concatStringsSep "," permissions)
+            # Remove the last part of the path
+            (builtins.dirOf dataset)
+          ]
+        )}
+      ''}"
+    );
 in
 {
 
@@ -82,7 +95,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.callPackage ./default.nix {};
+      default = pkgs.callPackage ./default.nix { };
     };
 
     interval = mkOption {
@@ -131,7 +144,10 @@ in
 
     zfsPermissions = mkOption {
       type = types.listOf types.str;
-      default = [ "mount" "destroy" ];
+      default = [
+        "mount"
+        "destroy"
+      ];
       description = lib.mdDoc ''
         Permissions granted for the {option}`services.zfs-snap-prune.user` user
         for local source datasets. See
@@ -171,17 +187,17 @@ in
       after = [ "zfs.target" ];
       startAt = cfg.interval;
       serviceConfig = {
-        ExecStartPre =
-          (map (job: buildAllowCommand cfg.zfsPermissions job.pool) cfg.jobs);
-        ExecStopPost =
-          (map (job: buildUnallowCommand cfg.zfsPermissions job.pool) cfg.jobs);
+        ExecStartPre = (map (job: buildAllowCommand cfg.zfsPermissions job.pool) cfg.jobs);
+        ExecStopPost = (map (job: buildUnallowCommand cfg.zfsPermissions job.pool) cfg.jobs);
         ExecStart = lib.escapeShellArgs [
           "${cfg.package}/bin/zfs-snap-prune"
           "--config"
-          (pkgs.writeText "zfs-snap-prune-config.yml" (builtins.toJSON {
-            mode = cfg.mode;
-            jobs = cfg.jobs;
-          }))
+          (pkgs.writeText "zfs-snap-prune-config.yml" (
+            builtins.toJSON {
+              mode = cfg.mode;
+              jobs = cfg.jobs;
+            }
+          ))
         ];
         User = cfg.user;
         Group = cfg.group;
@@ -214,7 +230,12 @@ in
         RootDirectory = "/run/zfs-snap-prune";
         RootDirectoryStartOnly = true;
         BindPaths = [ "/dev/zfs" ];
-        BindReadOnlyPaths = [ builtins.storeDir "/etc" "/run" "/bin/sh" ];
+        BindReadOnlyPaths = [
+          builtins.storeDir
+          "/etc"
+          "/run"
+          "/bin/sh"
+        ];
         # Avoid useless mounting of RootDirectory= in the own RootDirectory= of ExecStart='s mount namespace.
         InaccessiblePaths = [ "-+/run/zfs-snap-prune" ];
         MountAPIVFS = true;
