@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context};
+use anyhow::{Context, anyhow, bail};
 use chrono::{DateTime, Utc};
 use clap::{Parser, ValueEnum};
 use config::{Config, FileFormat, Value};
@@ -55,9 +55,9 @@ impl SnapshotTimeExtractor {
                     .with_context(|| "Reinterpreting capture_group as usize")?
         {
             bail!(format!(
-		"Snapshot time config capture_group out of range (pattern has at most {} capture groups)",
-		snapshot_pattern_capture_groups,
-	    ));
+                "Snapshot time config capture_group out of range (pattern has at most {} capture groups)",
+                snapshot_pattern_capture_groups,
+            ));
         }
 
         // Safe, as we've used try_into above:
@@ -411,9 +411,11 @@ impl JobConfig {
                         // We never store our custom, modified paths as the
                         // index into the HashMap, or as the snapshot path, as
                         // these are fed back into the libzetta crate:
-                        assert!(datasets
-                            .insert(path.clone(), (kind.clone(), vec![]))
-                            .is_none());
+                        assert!(
+                            datasets
+                                .insert(path.clone(), (kind.clone(), vec![]))
+                                .is_none()
+                        );
                     }
                 }
                 DatasetKind::Snapshot => {
