@@ -131,17 +131,6 @@ in
       description = lib.mdDoc "The group for the service.";
     };
 
-    sshKey = mkOption {
-      type = types.nullOr types.path;
-      # Prevent key from being copied to store
-      apply = mapNullable toString;
-      default = null;
-      description = lib.mdDoc ''
-        SSH private key file to use to login to the remote system. Can be
-        overridden in individual commands.
-      '';
-    };
-
     zfsPermissions = mkOption {
       type = types.listOf types.str;
       default = [
