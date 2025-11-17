@@ -91,7 +91,7 @@ in
   # Interface
 
   options.services.zfs-snap-prune = {
-    enable = mkEnableOption (lib.mdDoc "ZFS snap prune service");
+    enable = mkEnableOption "ZFS snap prune service";
 
     package = mkOption {
       type = types.package;
@@ -102,7 +102,7 @@ in
       type = types.str;
       default = "hourly";
       example = "*-*-* *:15:00";
-      description = lib.mdDoc ''
+      description = ''
         Run zfs-snap-prune at this interval. The default is to run hourly.
 
         The format is described in
@@ -114,7 +114,7 @@ in
       type = types.str;
       default = "zfssnapprune";
       example = "backup";
-      description = lib.mdDoc ''
+      description = ''
         The user for the service. ZFS privilege delegation will be
         automatically configured for any local pools used by zfs-snap-prune if
         this option is set to a user other than root. The user will be given
@@ -128,7 +128,7 @@ in
       type = types.str;
       default = "zfssnapprune";
       example = "backup";
-      description = lib.mdDoc "The group for the service.";
+      description = "The group for the service.";
     };
 
     zfsPermissions = mkOption {
@@ -137,7 +137,7 @@ in
         "mount"
         "destroy"
       ];
-      description = lib.mdDoc ''
+      description = ''
         Permissions granted for the {option}`services.zfs-snap-prune.user` user
         for local source datasets. See
         <https://openzfs.github.io/openzfs-docs/man/8/zfs-allow.8.html>
